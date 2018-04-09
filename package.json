@@ -28,7 +28,8 @@
     "android",
     "index.js",
     "index.d.ts",
-    "react-native-app-auth.podspec"
+    "react-native-app-auth.podspec",
+    "scripts"
   ],
   "repository": {
     "type": "git",
@@ -71,5 +72,10 @@
     "react": "^16.1.1",
     "react-native": "^0.50.3"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "rnpm": {
+    "commands": {
+      "postlink": "node node_modules/@brandingbrand/react-native-app-auth/scripts/rnpm-postlink"
+    }
+  }
 }
