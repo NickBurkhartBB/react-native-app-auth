@@ -3,7 +3,12 @@
 #import <AppAuth/AppAuth.h>
 #import <React/RCTLog.h>
 #import <React/RCTConvert.h>
-#import "AppDelegate.h"
+
+@protocol OIDAuthorizationFlowSession;
+
+@interface RNAppAuth()
+@property(nonatomic, strong, nullable) id<OIDAuthorizationFlowSession> currentAuthorizationFlow;
+@end
 
 @implementation RNAppAuth
 
@@ -144,12 +149,10 @@ RCT_REMAP_METHOD(refresh,
                                       additionalParameters:additionalParameters];
     
     
-    // performs authentication request
-    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
     
-    appDelegate.currentAuthorizationFlow =
+    _currentAuthorizationFlow =
     [OIDAuthState authStateByPresentingAuthorizationRequest:request
-                                   presentingViewController:appDelegate.window.rootViewController
+                                   presentingViewController:[UIApplication sharedApplication].delegate.window.rootViewController
                                                    callback:^(OIDAuthState *_Nullable authState,
                                                               NSError *_Nullable error) {
                                                        if (authState) {
@@ -213,6 +216,16 @@ RCT_REMAP_METHOD(refresh,
              @"refreshToken": response.refreshToken ? response.refreshToken : @"",
              @"tokenType": response.tokenType ? response.tokenType : @"",
              };
+}
+
+- (BOOL)application:(UIApplication *)app
+            openURL:(NSURL *)url
+            options:(NSDictionary<NSString *, id> *)options {
+    if ([_currentAuthorizationFlow resumeAuthorizationFlowWithURL:url]) {
+        _currentAuthorizationFlow = nil;
+        return YES;
+    }
+    return NO;
 }
 
 @end
