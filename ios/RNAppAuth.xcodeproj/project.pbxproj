@@ -23,7 +23,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		02A9A6ED212C1BC200FAAB86 /* RNAppAuthAuthorizationFlowManagerDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNAppAuthAuthorizationFlowManagerDelegate.h; sourceTree = "<group>"; };
 		134814201AA4EA6300B7C361 /* libRNAppAuth.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNAppAuth.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		19C8EE5020E3796B00C4D522 /* RNAppAuthAuthorizationFlowManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNAppAuthAuthorizationFlowManager.h; sourceTree = "<group>"; };
 		B3E7B5881CC2AC0600A0062D /* RNAppAuth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNAppAuth.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNAppAuth.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNAppAuth.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -52,6 +54,8 @@
 			children = (
 				B3E7B5881CC2AC0600A0062D /* RNAppAuth.h */,
 				B3E7B5891CC2AC0600A0062D /* RNAppAuth.m */,
+				19C8EE5020E3796B00C4D522 /* RNAppAuthAuthorizationFlowManager.h */,
+				02A9A6ED212C1BC200FAAB86 /* RNAppAuthAuthorizationFlowManagerDelegate.h */,
 				134814211AA4EA7D00B7C361 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -204,11 +208,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
-				"$(inherited)",
+					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRCROOT)/../../../ios/**",
+					"$(SRCROOT)/../../../ios/Pods/AppAuth/**",
+					"$(SRCROOT)/../../../ios/Pods/Headers/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
@@ -225,7 +230,8 @@
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../../React/**",
 					"$(SRCROOT)/../../react-native/React/**",
-					"$(SRCROOT)/../../../ios/**",
+					"$(SRCROOT)/../../../ios/Pods/AppAuth/**",
+					"$(SRCROOT)/../../../ios/Pods/Headers/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
