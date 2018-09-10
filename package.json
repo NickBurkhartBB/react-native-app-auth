@@ -57,6 +57,7 @@
     "babel-eslint": "^8.0.2",
     "babel-jest": "^21.2.0",
     "babel-preset-env": "^1.6.1",
+    "glob": "^5.0.15",
     "eslint": "2.10.2",
     "eslint-config-formidable": "^3.0.0",
     "eslint-config-prettier": "^2.9.0",
