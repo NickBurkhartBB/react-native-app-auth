@@ -7,6 +7,20 @@
 [![Build Status](https://travis-ci.org/FormidableLabs/react-native-app-auth.svg?branch=master)](https://travis-ci.org/FormidableLabs/react-native-app-auth)
 [![npm version](https://badge.fury.io/js/react-native-app-auth.svg)](https://badge.fury.io/js/react-native-app-auth)
 
+## Differences with fork [FormidableLabs/react-native-app-auth](https://www.github.com/FormidableLabs/react-native-app-auth)
+
+### react-native link scripts
+There are scripts added to be run using react-native link that will modify you Android and iOS projects so you don't have to manually set it up. This is to allow use inside libraries that don't expose the native project files like https://github.com/brandingbrand/flagship.
+
+You can configure you redirect scheme using your package.json file of you react-native app project.
+```json
+{
+  "react-native-app-auth": {
+    "redirectScheme": "com.oktapreview.sample-app"
+  }
+}
+```
+
 #### This is the API documentation for `react-native-app-auth >= 3.0.`
 
 [See version `2.x` documentation here](https://github.com/FormidableLabs/react-native-app-auth/tree/7a3fdc6e3572a998db99777b7562a7e63e0c2008).
