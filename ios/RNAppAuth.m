@@ -1,16 +1,19 @@
-
 #import "RNAppAuth.h"
 #import <AppAuth/AppAuth.h>
 #import <React/RCTLog.h>
 #import <React/RCTConvert.h>
+#import "RNAppAuthAuthorizationFlowManager.h"
 
-@protocol OIDAuthorizationFlowSession;
-
-@interface RNAppAuth()
-@property(nonatomic, strong, nullable) id<OIDAuthorizationFlowSession> currentAuthorizationFlow;
+@interface RNAppAuth()<RNAppAuthAuthorizationFlowManagerDelegate> {
+    id<OIDExternalUserAgentSession> _currentSession;
+}
 @end
 
 @implementation RNAppAuth
+
+-(BOOL)resumeExternalUserAgentFlowWithURL:(NSURL *)url {
+    return [_currentSession resumeExternalUserAgentFlowWithURL:url];
+}
 
 - (dispatch_queue_t)methodQueue
 {
@@ -41,7 +44,6 @@ RCT_REMAP_METHOD(authorize,
                     additionalParameters: additionalParameters
                                  resolve: resolve
                                   reject: reject];
-        
     } else {
         [OIDAuthorizationService discoverServiceConfigurationForIssuer:[NSURL URLWithString:issuer]
                                                             completion:^(OIDServiceConfiguration *_Nullable configuration, NSError *_Nullable error) {
@@ -49,7 +51,6 @@ RCT_REMAP_METHOD(authorize,
                                                                     reject(@"RNAppAuth Error", [error localizedDescription], error);
                                                                     return;
                                                                 }
-                                                                
                                                                 [self authorizeWithConfiguration: configuration
                                                                                      redirectUrl: redirectUrl
                                                                                         clientId: clientId
@@ -78,15 +79,14 @@ RCT_REMAP_METHOD(refresh,
     if (serviceConfiguration) {
         OIDServiceConfiguration *configuration = [self createServiceConfiguration:serviceConfiguration];
         [self refreshWithConfiguration: configuration
-                             redirectUrl: redirectUrl
-                                clientId: clientId
-                            clientSecret: clientSecret
-                            refreshToken: refreshToken
-                                  scopes: scopes
-                    additionalParameters: additionalParameters
-                                 resolve: resolve
-                                  reject: reject];
-        
+                           redirectUrl: redirectUrl
+                              clientId: clientId
+                          clientSecret: clientSecret
+                          refreshToken: refreshToken
+                                scopes: scopes
+                  additionalParameters: additionalParameters
+                               resolve: resolve
+                                reject: reject];
     } else {
         // otherwise hit up the discovery endpoint
         [OIDAuthorizationService discoverServiceConfigurationForIssuer:[NSURL URLWithString:issuer]
@@ -116,13 +116,13 @@ RCT_REMAP_METHOD(refresh,
     NSURL *authorizationEndpoint = [NSURL URLWithString: [serviceConfiguration objectForKey:@"authorizationEndpoint"]];
     NSURL *tokenEndpoint = [NSURL URLWithString: [serviceConfiguration objectForKey:@"tokenEndpoint"]];
     NSURL *registrationEndpoint = [NSURL URLWithString: [serviceConfiguration objectForKey:@"registrationEndpoint"]];
-    
+
     OIDServiceConfiguration *configuration =
     [[OIDServiceConfiguration alloc]
      initWithAuthorizationEndpoint:authorizationEndpoint
      tokenEndpoint:tokenEndpoint
      registrationEndpoint:registrationEndpoint];
-    
+
     return configuration;
 }
 
@@ -147,20 +147,26 @@ RCT_REMAP_METHOD(refresh,
                                                redirectURL:[NSURL URLWithString:redirectUrl]
                                               responseType:OIDResponseTypeCode
                                       additionalParameters:additionalParameters];
-    
-    
-    
-    _currentAuthorizationFlow =
-    [OIDAuthState authStateByPresentingAuthorizationRequest:request
-                                   presentingViewController:[UIApplication sharedApplication].delegate.window.rootViewController
+
+    // performs authentication request
+    id<UIApplicationDelegate, RNAppAuthAuthorizationFlowManager> appDelegate = (id<UIApplicationDelegate, RNAppAuthAuthorizationFlowManager>)[UIApplication sharedApplication].delegate;
+    if (![[appDelegate class] conformsToProtocol:@protocol(RNAppAuthAuthorizationFlowManager)]) {
+        [NSException raise:@"RNAppAuth Missing protocol conformance"
+                    format:@"%@ does not conform to RNAppAuthAuthorizationFlowManager", appDelegate];
+    }
+    appDelegate.authorizationFlowManagerDelegate = self;
+    __weak typeof(self) weakSelf = self;
+    _currentSession = [OIDAuthState authStateByPresentingAuthorizationRequest:request
+                                   presentingViewController:appDelegate.window.rootViewController
                                                    callback:^(OIDAuthState *_Nullable authState,
                                                               NSError *_Nullable error) {
+                                                       typeof(self) strongSelf = weakSelf;
+                                                       strongSelf->_currentSession = nil;
                                                        if (authState) {
                                                            resolve([self formatResponse:authState.lastTokenResponse]);
                                                        } else {
                                                            reject(@"RNAppAuth Error", [error localizedDescription], error);
                                                        }
-                                                       
                                                    }]; // end [OIDAuthState authStateByPresentingAuthorizationRequest:request
 }
 
@@ -177,7 +183,7 @@ RCT_REMAP_METHOD(refresh,
             additionalParameters: (NSDictionary *_Nullable) additionalParameters
                          resolve:(RCTPromiseResolveBlock) resolve
                           reject: (RCTPromiseRejectBlock)  reject {
-    
+
     OIDTokenRequest *tokenRefreshRequest =
     [[OIDTokenRequest alloc] initWithConfiguration:configuration
                                          grantType:@"refresh_token"
@@ -189,7 +195,7 @@ RCT_REMAP_METHOD(refresh,
                                       refreshToken:refreshToken
                                       codeVerifier:nil
                               additionalParameters:additionalParameters];
-    
+
     [OIDAuthorizationService performTokenRequest:tokenRefreshRequest
                                         callback:^(OIDTokenResponse *_Nullable response,
                                                    NSError *_Nullable error) {
@@ -199,7 +205,6 @@ RCT_REMAP_METHOD(refresh,
                                                 reject(@"RNAppAuth Error", [error localizedDescription], error);
                                             }
                                         }];
-    
 }
 
 /*
@@ -207,7 +212,9 @@ RCT_REMAP_METHOD(refresh,
  */
 - (NSDictionary*)formatResponse: (OIDTokenResponse*) response {
     NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
-    [dateFormat setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
+    dateFormat.timeZone = [NSTimeZone timeZoneWithAbbreviation: @"UTC"];
+    [dateFormat setLocale:[NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"]];
+    [dateFormat setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss'Z'"];
 
     return @{@"accessToken": response.accessToken ? response.accessToken : @"",
              @"accessTokenExpirationDate": response.accessTokenExpirationDate ? [dateFormat stringFromDate:response.accessTokenExpirationDate] : @"",
@@ -216,16 +223,6 @@ RCT_REMAP_METHOD(refresh,
              @"refreshToken": response.refreshToken ? response.refreshToken : @"",
              @"tokenType": response.tokenType ? response.tokenType : @"",
              };
-}
-
-- (BOOL)application:(UIApplication *)app
-            openURL:(NSURL *)url
-            options:(NSDictionary<NSString *, id> *)options {
-    if ([_currentAuthorizationFlow resumeAuthorizationFlowWithURL:url]) {
-        _currentAuthorizationFlow = nil;
-        return YES;
-    }
-    return NO;
 }
 
 @end
