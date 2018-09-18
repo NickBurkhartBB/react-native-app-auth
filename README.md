@@ -12,7 +12,8 @@
 ### react-native link scripts
 There are scripts added to be run using react-native link that will modify you Android and iOS projects so you don't have to manually set it up. This is to allow use inside libraries that don't expose the native project files like https://github.com/brandingbrand/flagship.
 
-You can configure you redirect scheme using your package.json file of you react-native app project.
+You can configure you redirect scheme in one of two places.
+If you are inside a Flagship application, you can use your env.[ENV].js file to define it. You can use also use the package.json file of you react-native app project. The format should follow the scheme below.
 ```json
 {
   "react-native-app-auth": {
