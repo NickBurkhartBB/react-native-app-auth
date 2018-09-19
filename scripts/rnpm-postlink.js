@@ -14,8 +14,12 @@ if (!redirectScheme) {
 }
 
 if (redirectScheme) {
-  require('./rnpm-postlink-android')(redirectScheme);
-  require('./rnpm-postlink-ios')(redirectScheme);
+  // convert string to array
+  const redirectSchemes = (typeof redirectScheme === 'string') ?
+    [ redirectScheme ] :
+    redirectScheme;
+  require('./rnpm-postlink-android')(redirectSchemes);
+  require('./rnpm-postlink-ios')(redirectSchemes);
 } else {
   console.warn('Unable to read redirectScheme from package.json.');
   console.warn('You will have to manually link the Android project.');

@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const appBuildGradlePath = path.join('android', 'app', 'build.gradle');
+const appManifestPath = path.join('android', 'app', 'src', 'main', 'AndroidManifest.xml');
 const projectSettings = path.join('android', 'settings.gradle');
-
-module.exports = function install(redirectScheme) { 
+module.exports = function install(redirectSchemes) { 
 
     let buildGradleContents = fs.readFileSync(appBuildGradlePath, 'utf8');
 
@@ -17,25 +17,45 @@ module.exports = function install(redirectScheme) {
       'compileSdkVersion 24', 
       'compileSdkVersion 25');
 
-    // 3) Add redirectScheme to android config
-    if (buildGradleContents.indexOf(redirectScheme) === -1) {
-      buildGradleContents = buildGradleContents.replace(
-        /(applicationId[^\n]+)\n/, 
-        '$1\nmanifestPlaceholders =[\nappAuthRedirectScheme: "' + redirectScheme + '"\n]\n');
-    }
-
-    // 4) fix scoped package name in app/build.gradle
+    // 3) fix scoped package name in app/build.gradle
     buildGradleContents = buildGradleContents.replace(
       /':@brandingbrand\/react-native-app-auth'/g,
       '\':react-native-app-auth\'');
 
-    // 5) Write file
+    // 4) Write file
     fs.writeFileSync(appBuildGradlePath, buildGradleContents);
+
+    // add redirect schemes to AndroidManifest
+    let appManifestContents = fs.readFileSync(appManifestPath, 'utf8');
+    const appAuthReceiver = 'net.openid.appauth.RedirectUriReceiverActivity';
+    // look for receiver in manifest, and add if not there
+    if (appManifestContents.indexOf(appAuthReceiver) === -1) {
+      const receiverActivity = `
+      <activity
+        android:name="${appAuthReceiver}"
+        xmlns:tools="http://schemas.android.com/tools"
+              tools:node="replace">
+        ${redirectSchemes.map(scheme => {
+          return `
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="${scheme}"/>
+            </intent-filter>
+          `;
+        }).join('\n')}
+      </activity>`;
+      appManifestContents = appManifestContents.replace('</application>', receiverActivity + '\n</application>');
+
+      fs.writeFileSync(appManifestPath, appManifestContents);
+    }
+
 
     // clean up scoped package name in settings.gradle
     let settingsGradleContents = fs.readFileSync(projectSettings, 'utf8');
     settingsGradleContents = settingsGradleContents.replace(
       /':@brandingbrand\/react-native-app-auth'/g,
       '\':react-native-app-auth\'');
-      fs.writeFileSync(projectSettings, settingsGradleContents);
+    fs.writeFileSync(projectSettings, settingsGradleContents);
   }
