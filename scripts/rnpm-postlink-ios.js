@@ -4,7 +4,7 @@ const path = require('path');
 const appPath = path.join(process.cwd(), 'ios');
 const package = require(path.join(process.cwd(), 'package.json'));
 
-module.exports = function install(redirectScheme) {
+module.exports = function install(redirectSchemes) {
   const folders = fs.readdirSync(appPath);
   const projectFile = folders.find(file => file.indexOf('xcodeproj') > -1);
   const projectName = projectFile && projectFile.split('.')[0];
@@ -62,7 +62,7 @@ module.exports = function install(redirectScheme) {
   if (fs.existsSync(pListFilePath)) {
     let infoPListContents = fs.readFileSync(pListFilePath, 'utf8');
 
-    if (infoPListContents.indexOf(redirectScheme) === -1) {
+    if (infoPListContents.indexOf('AppAuthRedirectScheme') === -1) {
       // Add to redirectScheme to CFBundleURLTypes
       infoPListContents = infoPListContents.replace(
         /<key>CFBundleURLTypes<\/key>\s*\n\s*<array>/,
@@ -73,7 +73,7 @@ module.exports = function install(redirectScheme) {
         '\t\t\t<string>AppAuthRedirectScheme</string>\n' +
         '\t\t\t<key>CFBundleURLSchemes</key>\n' +
         '\t\t\t<array>\n' +
-        '\t\t\t\t<string>' + redirectScheme + '</string>\n' +
+        (redirectSchemes.map(scheme => '\t\t\t\t<string>' + scheme + '</string>\n').join('\n')) +
         '\t\t\t</array>\n' +
         '\t\t</dict>\n'
       );
