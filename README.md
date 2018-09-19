@@ -22,6 +22,14 @@ If you are inside a Flagship application, you can use your env.[ENV].js file to 
 }
 ```
 
+You can also specify redirectScheme as an array if you need to support multiple redirect schemes. This is useful for targeting all environments so that the Flagship environment switcher will work.
+```json
+"redirectScheme": [
+  "com.oktapreview.sample-app",
+  "com.oktapreview.test-app"
+]
+```
+
 #### This is the API documentation for `react-native-app-auth >= 3.0.`
 
 [See version `2.x` documentation here](https://github.com/FormidableLabs/react-native-app-auth/tree/7a3fdc6e3572a998db99777b7562a7e63e0c2008).
