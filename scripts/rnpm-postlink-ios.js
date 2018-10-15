@@ -47,9 +47,18 @@ module.exports = function install(redirectSchemes) {
   if (~appDelegateContents.indexOf('resumeExternalUserAgentFlowWithURL')) {
     console.log(`"AppDelegate.m" openURL has already been added.`);
   } else {
-    appDelegateContents = appDelegateContents.replace(
-      /(\[RCTLinkingManager[\n ]+application:application[\n ]+openURL:url[\n ]+sourceApplication:sourceApplication[\n ]+annotation:annotation\])/,
-      '$1 || [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]');
+    if (~appDelegateContents.indexOf(`RCTLinkingManager`)) {
+      appDelegateContents = appDelegateContents.replace(
+        /(\[RCTLinkingManager[\n ]+application:application[\n ]+openURL:url[\n ]+sourceApplication:sourceApplication[\n ]+annotation:annotation\])/,
+        '$1 || [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]');
+    } else {
+      appDelegateContents = appDelegateContents.replace('@end',
+        `- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<NSString *, id> *)options
+{
+  return [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url];\n' +
+}
+@end`);
+    }
     fs.writeFileSync(appDelegatePath, appDelegateContents);
   }
 
