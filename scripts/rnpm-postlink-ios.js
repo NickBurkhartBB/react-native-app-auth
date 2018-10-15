@@ -30,30 +30,26 @@ module.exports = function install(redirectSchemes) {
   if (~appDelegateHeaderContents.indexOf(importStatement) || !interfaceMatch) {
     console.log(`"RNAppAuthAuthorizationFlowManager.h" header already imported.`);
   } else {
-      const UIKitImport = `#import <UIKit/UIKit.h>`;
-      appDelegateHeaderContents = appDelegateHeaderContents.replace(UIKitImport,
-          `${UIKitImport}\n${importStatement}`);
-      appDelegateHeaderContents = appDelegateHeaderContents.replace(interfaceMatch[1],
-        `${interfaceMatch[1]}, RNAppAuthAuthorizationFlowManager`);
-      const windowProp = '@property (nonatomic, strong) UIWindow *window;';
-      const delegateProp = `@property(nonatomic, weak)id<RNAppAuthAuthorizationFlowManagerDelegate>authorizationFlowManagerDelegate;`;
-      appDelegateHeaderContents = appDelegateHeaderContents.replace(windowProp,
-        `${delegateProp}\n${windowProp}`);
-      fs.writeFileSync(appDelegateHeaderPath, appDelegateHeaderContents);
+    const UIKitImport = `#import <UIKit/UIKit.h>`;
+    appDelegateHeaderContents = appDelegateHeaderContents.replace(UIKitImport,
+      `${UIKitImport}\n${importStatement}`);
+    appDelegateHeaderContents = appDelegateHeaderContents.replace(interfaceMatch[1],
+      `${interfaceMatch[1]}, RNAppAuthAuthorizationFlowManager`);
+    const windowProp = '@property (nonatomic, strong) UIWindow *window;';
+    const delegateProp = `@property(nonatomic, weak)id<RNAppAuthAuthorizationFlowManagerDelegate>authorizationFlowManagerDelegate;`;
+    appDelegateHeaderContents = appDelegateHeaderContents.replace(windowProp,
+      `${delegateProp}\n${windowProp}`);
+    fs.writeFileSync(appDelegateHeaderPath, appDelegateHeaderContents);
   }
 
-  // add AppDelegate.m changes
+  // add AppDelegate.m changes (RCTLinkingManager / Deep Linking Logic)
   let appDelegateContents = fs.readFileSync(appDelegatePath, 'utf8');
   if (~appDelegateContents.indexOf('resumeExternalUserAgentFlowWithURL')) {
     console.log(`"AppDelegate.m" openURL has already been added.`);
   } else {
-    appDelegateContents = appDelegateContents.replace('@end',
-      `
-      - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<NSString *, id> *)options {
-        return [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url];
-      }
-      @end
-      `);
+    appDelegateContents = appDelegateContents.replace(
+      /(\[RCTLinkingManager[\n ]+application:application[\n ]+openURL:url[\n ]+sourceApplication:sourceApplication[\n ]+annotation:annotation\])/,
+      '$1 || [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]');
     fs.writeFileSync(appDelegatePath, appDelegateContents);
   }
 
@@ -91,12 +87,12 @@ module.exports = function install(redirectSchemes) {
     if (array.length === 0 || !appName) return null;
 
     for (var i = 0; i < array.length; i++) {
-        var path = array[i];
-        if (path && path.indexOf(appName) !== -1) {
-            return path;
-        }
+      var path = array[i];
+      if (path && path.indexOf(appName) !== -1) {
+        return path;
+      }
     }
 
     return null;
-}
+  }
 }
