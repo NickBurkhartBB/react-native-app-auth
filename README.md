@@ -4,8 +4,8 @@
 <strong>React native bridge for AppAuth - an SDK for communicating with OAuth2 providers</strong>
 <br><br>
 
-[![Build Status](https://travis-ci.org/FormidableLabs/react-native-app-auth.svg?branch=master)](https://travis-ci.org/FormidableLabs/react-native-app-auth)
-[![npm version](https://badge.fury.io/js/react-native-app-auth.svg)](https://badge.fury.io/js/react-native-app-auth)
+[![npm package version](https://badge.fury.io/js/react-native-app-auth.svg)](https://badge.fury.io/js/react-native-app-auth)
+[![Maintenance Status][maintenance-image]](#maintenance-status)
 
 ## Differences with fork [FormidableLabs/react-native-app-auth](https://www.github.com/FormidableLabs/react-native-app-auth)
 
@@ -30,11 +30,9 @@ You can also specify redirectScheme as an array if you need to support multiple 
 ]
 ```
 
-#### This is the API documentation for `react-native-app-auth >= 3.0.`
+#### This is the API documentation for `react-native-app-auth >= 4.0.`
 
-[See version `2.x` documentation here](https://github.com/FormidableLabs/react-native-app-auth/tree/7a3fdc6e3572a998db99777b7562a7e63e0c2008).
-
-[See version `1.x` documentation here](https://github.com/FormidableLabs/react-native-app-auth/tree/v1.0.1).
+Past documentation: [`3.1`](https://github.com/FormidableLabs/react-native-app-auth/tree/v3.1.0) [`3.0`](https://github.com/FormidableLabs/react-native-app-auth/tree/v3.0.0) [`2.x`](https://github.com/FormidableLabs/react-native-app-auth/tree/v2.0.0) [`1.x`](https://github.com/FormidableLabs/react-native-app-auth/tree/v1.0.1).
 
 React Native bridge for [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) and
 [AppAuth-Android](https://github.com/openid/AppAuth-Android) SDKS for communicating with
@@ -48,20 +46,23 @@ This library _should_ support any OAuth provider that implements the
 
 These providers are OpenID compliant, which means you can use [autodiscovery](https://openid.net/specs/openid-connect-discovery-1_0.html).
 
-* [Identity Server4](https://demo.identityserver.io/) ([Example configuration](#identity-server-4))
-* [Identity Server3](https://github.com/IdentityServer/IdentityServer3) ([Example configuration](#identity-server-3))
+* [Identity Server4](https://demo.identityserver.io/) ([Example configuration](./docs/config-examples/identity-server-4.md))
+* [Identity Server3](https://github.com/IdentityServer/IdentityServer3.md) ([Example configuration](./docs/config-examples/identity-server-3.md))
 * [Google](https://developers.google.com/identity/protocols/OAuth2)
-  ([Example configuration](#google))
-* [Okta](https://developer.okta.com) ([Example configuration](#okta))
-* [Keycloak](http://www.keycloak.org/) ([Example configuration](#keycloak))
-* [Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory) ([Example configuration](#azure-active-directory))
+  ([Example configuration](./docs/config-examples/google.md))
+* [Okta](https://developer.okta.com) ([Example configuration](./docs/config-examples/okta.md))
+* [Keycloak](http://www.keycloak.org/) ([Example configuration](./docs/config-examples/keycloak.md))
+* [Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory) ([Example configuration](./docs/config-examples/azure-active-directory.md))
+* [AWS Cognito](https://eu-west-1.console.aws.amazon.com/cognito) ([Example configuration](./docs/config-examples/aws-cognito.md))
 
 ### Tested OAuth2 providers:
 
 These providers implement the OAuth2 spec, but are not OpenID providers, which means you must configure the authorization and token endpoints yourself.
 
-* [Uber](https://developer.uber.com/docs/deliveries/guides/three-legged-oauth) ([Example configuration](#uber))
-* [Fitbit](https://dev.fitbit.com/build/reference/web-api/oauth2/) ([Example configuration](#fitbit))
+* [Uber](https://developer.uber.com/docs/deliveries/guides/three-legged-oauth.md) ([Example configuration](./docs/config-examples/uber))
+* [Fitbit](https://dev.fitbit.com/build/reference/web-api/oauth2/) ([Example configuration](./docs/config-examples/fitbit.md))
+* [Dropbox](https://www.dropbox.com/developers/reference/oauth-guide) ([Example configuration](./docs/config-examples/dropbox.md))
+* [Reddit](https://github.com/reddit-archive/reddit/wiki/oauth2) ([Example configuration](./docs/config-examples/reddit.md))
 
 ## Why you may want to use this library
 
@@ -102,6 +103,25 @@ const config = {
 const result = await authorize(config);
 ```
 
+### `prefetchConfiguration`
+
+ANDROID This will prefetch the authorization service configuration. Invoking this function is optional
+and will speed up calls to authorize. This is only supported on Android.
+
+```js
+import { prefetchConfiguration } from 'react-native-app-auth';
+
+const config = {
+  warmAndPrefetchChrome: true,
+  issuer: '<YOUR_ISSUER_URL>',
+  clientId: '<YOUR_CLIENT_ID>',
+  redirectUrl: '<YOUR_REDIRECT_URL>',
+  scopes: ['<YOUR_SCOPES_ARRAY>'],
+};
+
+prefetchConfiguration(config);
+```
+
 #### config
 
 This is your configuration object for the client. The config is passed into each of the methods
@@ -120,7 +140,13 @@ with optional overrides.
 * **additionalParameters** - (`object`) additional parameters that will be passed in the authorization request.
   Must be string values! E.g. setting `additionalParameters: { hello: 'world', foo: 'bar' }` would add
   `hello=world&foo=bar` to the authorization request.
+* **clientAuthMethod** - (`string`) _ANDROID_ Client Authentication Method. Can be either `basic` (default) for [Basic Authentication](https://github.com/openid/AppAuth-Android/blob/master/library/java/net/openid/appauth/ClientSecretBasic.java) or `post` for [HTTP POST body Authentication](https://github.com/openid/AppAuth-Android/blob/master/library/java/net/openid/appauth/ClientSecretPost.java)
 * **dangerouslyAllowInsecureHttpRequests** - (`boolean`) _ANDROID_ whether to allow requests over plain HTTP or with self-signed SSL certificates. :warning: Can be useful for testing against local server, _should not be used in production._ This setting has no effect on iOS; to enable insecure HTTP requests, add a [NSExceptionAllowsInsecureHTTPLoads exception](https://cocoacasts.com/how-to-add-app-transport-security-exception-domains) to your App Transport Security settings.
+* **customHeaders** - (`object`) _ANDROID_ you can specify custom headers to pass during authorize request and/or token request.
+  * **authorize** - (`{ [key: string]: value }`) headers to be passed during authorization request.
+  * **token** - (`{ [key: string]: value }`) headers to be passed during token retrieval request.
+* **useNonce** - (`boolean`) _IOS_ (default: true) optionally allows not sending the nonce parameter, to support non-compliant providers
+* **usePKCE** - (`boolean`) (default: true) optionally allows not sending the code_challenge parameter and skipping PKCE code verification, to support non-compliant providers.
 
 #### result
 
@@ -128,10 +154,13 @@ This is the result from the auth server
 
 * **accessToken** - (`string`) the access token
 * **accessTokenExpirationDate** - (`string`) the token expiration date
-* **additionalParameters** - (`Object`) additional url parameters from the auth server
+* **authorizeAdditionalParameters** - (`Object`) additional url parameters from the authorizationEndpoint response.
+* **tokenAdditionalParameters** - (`Object`) additional url parameters from the tokenEndpoint response.
+* **additionalParameters** - (`Object`) :warning: _DEPRECATED_ legacy implementation. Will be removed in a future release. Returns just `tokenAdditionalParameters` for Android and `authorizeAdditionalParameters` on iOS
 * **idToken** - (`string`) the id token
 * **refreshToken** - (`string`) the refresh token
 * **tokenType** - (`string`) the token type, e.g. Bearer
+* **scopes** - ([`string`]) the scopes the user has agreed to be granted
 
 ### `refresh`
 
@@ -198,7 +227,7 @@ steps instead.
 
 1. Open up `android/app/src/main/java/[...]/MainApplication.java`
 
-* Add `import com.reactlibrary.RNAppAuthPackage;` to the imports at the top of the file
+* Add `import com.rnappauth.RNAppAuthPackage;` to the imports at the top of the file
 * Add `new RNAppAuthPackage()` to the list returned by the `getPackages()` method
 
 2. Append the following lines to `android/settings.gradle`:
@@ -244,7 +273,11 @@ AppAuth supports three options for dependency management.
 
        github "openid/AppAuth-iOS" "master"
 
-   Then run `carthage bootstrap`.
+   Then run `carthage update --platform iOS`.
+
+   Drag and drop `AppAuth.framework` from `ios/Carthage/Build/iOS` under `Frameworks` in `Xcode`.
+
+   Add a copy files build step for `AppAuth.framework`: open Build Phases on Xcode, add a new "Cope Files" phase, choose "Frameworks" as destination, add `AppAuth.framework` and ensure "Code Sign on Copy" is checked.
 
 3. **Static Library**
 
@@ -330,6 +363,8 @@ class AppDelegate: UIApplicationDelegate, RNAppAuthAuthorizationFlowManager {
 
 ### Android Setup
 
+**Note:** for RN >= 0.57, you will get a warning about compile being obsolete. To get rid of this warning, use [patch-package](https://github.com/ds300/patch-package) to replace compile with implementation [as in this PR](https://github.com/FormidableLabs/react-native-app-auth/pull/242) - we're not deploying this right now, because it would break the build for RN < 57.
+
 To setup the Android project, you need to perform two steps:
 
 1. [Install Android support libraries](#install-android-support-libraries)
@@ -352,7 +387,7 @@ correct Android Support library version to your project:
    of the appcompat libraries and need to upgdrade:
    ```
    dependencies {
-     compile "com.android.support:appcompat-v7:25.3.1"
+     implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
    }
    ```
 3. If necessary, update the `compileSdkVersion` to 25:
@@ -411,304 +446,13 @@ Some authentication providers, including examples cited below, require you to pr
 > [strongly recommend](https://github.com/openid/AppAuth-Android#utilizing-client-secrets-dangerous) you avoid using static client secrets in your native applications whenever possible. Client secrets derived via a dynamic client registration are safe to use, but static client secrets can be easily extracted from your apps and allow others to impersonate your app and steal user data. If client secrets must be used by the OAuth2 provider you are integrating with, we strongly recommend performing the code exchange step on your backend, where the client secret can be kept hidden.
 
 Having said this, in some cases using client secrets is unavoidable. In these cases, a `clientSecret` parameter can be provided to `authorize`/`refresh` calls when performing a token request.
+g
 
-### Identity Server 4
 
-This library supports authenticating for Identity Server 4 out of the box. Some quirks:
 
-1. In order to enable refresh tokens, `offline_access` must be passed in as a scope variable
-2. In order to revoke the access token, we must sent client id in the method body of the request.
-   This is not part of the OAuth spec.
+#### Maintenance Status
 
-```js
-// Note "offline_access" scope is required to get a refresh token
-const config = {
-  issuer: 'https://demo.identityserver.io',
-  clientId: 'native.code',
-  redirectUrl: 'io.identityserver.demo:/oauthredirect',
-  scopes: ['openid', 'profile', 'offline_access']
-};
+**Active:** Formidable is actively working on this project, and we expect to continue for work for the foreseeable future. Bug reports, feature requests and pull requests are welcome. 
 
-// Log in to get an authentication token
-const authState = await authorize(config);
+[maintenance-image]: https://img.shields.io/badge/maintenance-active-green.svg
 
-// Refresh token
-const refreshedState = await refresh({
-  ...config,
-  refreshToken: authState.refreshToken,
-});
-
-// Revoke token, note that Identity Server expects a client id on revoke
-await revoke(config, {
-  tokenToRevoke: refreshedState.refreshToken,
-  sendClientId: true
-});
-```
-
-<details>
-  <summary>Example server configuration</summary>
-
-```
-var client = new Client
-{
-  ClientId = "native.code",
-  ClientName = "Native Client (Code with PKCE)",
-  RequireClientSecret = false,
-  RedirectUris = { "io.identityserver.demo:/oauthredirect" },
-  AllowedGrantTypes = GrantTypes.Code,
-  RequirePkce = true,
-  AllowedScopes = { "openid", "profile" },
-  AllowOfflineAccess = true
-};
-```
-
-</details>
-
-### Identity Server 3
-
-This library supports authenticating with Identity Server 3. The only difference from
-Identity Server 4 is that it requires a `clientSecret` and there is no way to opt out of it.
-
-```js
-// You must include a clientSecret
-const config = {
-  issuer: 'your-identityserver-url',
-  clientId: 'your-client-id',
-  clientSecret: 'your-client-secret',
-  redirectUrl: 'com.your.app.name:/oauthredirect',
-  scopes: ['openid', 'profile', 'offline_access']
-};
-
-// Log in to get an authentication token
-const authState = await authorize(config);
-
-// Refresh token
-const refreshedState = await refresh({
-  ...config,
-  refreshToken: authState.refreshToken,
-});
-
-// Revoke token, note that Identity Server expects a client id on revoke
-await revoke(config, {
-  tokenToRevoke: refreshedState.refreshToken,
-  sendClientId: true
-});
-```
-
-<details>
-  <summary>Example server configuration</summary>
-
-```
-var client = new Client
-{
-  ClientId = "native.code",
-  ClientName = "Native Client (Code with PKCE)",
-  Flow = Flows.AuthorizationCodeWithProofKey,
-  RedirectUris = { "com.your.app.name:/oauthredirect" },
-  ClientSecrets = new List<Secret> { new Secret("your-client-secret".Sha256()) },
-  AllowAccessToAllScopes = true
-};
-```
-
-</details>
-
-### Google
-
-Full support out of the box.
-
-```js
-const config = {
-  issuer: 'https://accounts.google.com',
-  clientId: 'GOOGLE_OAUTH_APP_GUID.apps.googleusercontent.com',
-  redirectUrl: 'com.googleusercontent.apps.GOOGLE_OAUTH_APP_GUID:/oauth2redirect/google',
-  scopes: ['openid', 'profile', 'offline_access']
-};
-
-// Log in to get an authentication token
-const authState = await authorize(config);
-
-// Refresh token
-const refreshedState = await refresh(config, {
-  refreshToken: authState.refreshToken
-});
-
-// Revoke token
-await revoke(config, {
-  tokenToRevoke: refreshedState.refreshToken
-});
-```
-
-### Okta
-
-Full support out of the box.
-
-> If you're using Okta and want to add App Auth to your React Native application, you'll need an application to authorize against. If you don't have an Okta Developer account, [you can signup for free](https://developer.okta.com/signup/).
->
-> Log in to your Okta Developer account and navigate to **Applications** > **Add Application**. Click **Native** and click the **Next** button. Give the app a name you’ll remember (e.g., `React Native`), select `Refresh Token` as a grant type, in addition to the default `Authorization Code`. Copy the **Login redirect URI** (e.g., `com.oktapreview.dev-158606:/callback`) and save it somewhere. You'll need this value when configuring your app.
->
-> Click **Done** and you'll see a client ID on the next screen. Copy the redirect URI and clientId values into your App Auth config.
-
-```js
-const config = {
-  issuer: 'https://{yourOktaDomain}.com/oauth2/default',
-  clientId: '{clientId}',
-  redirectUrl: 'com.{yourReversedOktaDomain}:/callback',
-  scopes: ['openid', 'profile']
-};
-
-// Log in to get an authentication token
-const authState = await authorize(config);
-
-// Refresh token
-const refreshedState = await refresh(config, {
-  refreshToken: authState.refreshToken,
-});
-
-// Revoke token
-await revoke(config, {
-  tokenToRevoke: refreshedState.refreshToken
-});
-```
-
-### Keycloak
-
-Keycloak [does not specify a revocation endpoint](http://keycloak-user.88327.x6.nabble.com/keycloak-user-Revoking-an-OAuth-Token-td3041.html) so revoke functionality doesn't work.
-
-If you use [JHipster](http://www.jhipster.tech/)'s default Keycloak Docker image, everything will work with the following settings, except for revoke.
-
-```js
-const config = {
-  issuer: 'http://localhost:9080/auth/realms/jhipster',
-  clientId: 'web_app',
-  redirectUrl: '<YOUR_REDIRECT_SCHEME>:/callback'
-  scopes: ['openid', 'profile']
-};
-
-// Log in to get an authentication token
-const authState = await authorize(config);
-
-// Refresh token
-const refreshedState = await refresh(config, {
-  refreshToken: authState.refreshToken,
-});
-```
-
-### Azure Active Directory
-
-Azure Active Directory [does not specify a revocation endpoint](https://docs.microsoft.com/en-us/azure/active-directory/active-directory-configurable-token-lifetimes#access-tokens) because the access token are not revokable. Therefore `revoke` functionality doesn't work.
-
-See the [Azure docs on requesting an access token](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-protocols-oauth-code#request-an-authorization-code) for more info on additional parameters.
-
-Please Note:
-
-* The [Azure docs](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-protocols-oauth-code#request-an-authorization-code) recommend `'urn:ietf:wg:oauth:2.0:oob'` as the `redirectUrl`.
-* `Scopes` is ignored.
-* `additionalParameters.resource` may be required based on the tenant settings.
-
-```js
-const config = {
-  issuer: 'https://login.microsoftonline.com/your-tenant-id',
-  clientId: 'your-client-id',
-  redirectUrl: 'urn:ietf:wg:oauth:2.0:oob',
-  scopes: [], // ignored by Azure AD
-  additionalParameters: {
-    resource: 'your-resource'
-  }
-};
-
-// Log in to get an authentication token
-const authState = await authorize(config);
-
-// Refresh token
-const refreshedState = await refresh(config, {
-  refreshToken: authState.refreshToken,
-});
-```
-
-### Uber
-
-Uber provides an OAuth 2.0 endpoint for logging in with a Uber user's credentials. You'll need to first [create an Uber OAuth application here](https://developer.uber.com/docs/riders/guides/authentication/introduction).
-
-Please note:
-
-* Uber does not provide a OIDC discovery endpoint, so `serviceConfiguration` is used instead.
-* Uber OAuth requires a [client secret](#note-about-client-secrets).
-
-```js
-const config = {
-  clientId: 'your-client-id-generated-by-uber',
-  clientSecret: 'your-client-secret-generated-by-uber',
-  redirectUrl: 'com.whatever.url.you.configured.in.uber.oauth://redirect', //note: path is required
-  scopes: ['profile', 'delivery'], // whatever scopes you configured in Uber OAuth portal
-  serviceConfiguration: {
-    authorizationEndpoint: 'https://login.uber.com/oauth/v2/authorize',
-    tokenEndpoint: 'https://login.uber.com/oauth/v2/token',
-    revocationEndpoint: 'https://login.uber.com/oauth/v2/revoke'
-  }
-};
-
-// Log in to get an authentication token
-const authState = await authorize(config);
-
-// Refresh token
-const refreshedState = await refresh(config, {
-  refreshToken: authState.refreshToken,
-});
-
-// Revoke token
-await revoke(config, {
-  tokenToRevoke: refreshedState.refreshToken
-});
-```
-
-### Fitbit
-
-Fitbit provides an OAuth 2.0 endpoint for logging in with a Fitbit user's credentials. You'll need to first [register your Fitbit application here](https://dev.fitbit.com/apps/new).
-
-Please note:
-
-* Fitbit does not provide a OIDC discovery endpoint, so `serviceConfiguration` is used instead.
-* Fitbit OAuth requires a [client secret](#note-about-client-secrets).
-
-```js
-const config = {
-  clientId: 'your-client-id-generated-by-uber',
-  clientSecret: 'your-client-secret-generated-by-fitbit',
-  redirectUrl: 'com.whatever.url.you.configured.in.uber.oauth://redirect', //note: path is required
-  scopes: ['activity', 'sleep'],
-  serviceConfiguration: {
-    authorizationEndpoint: 'https://www.fitbit.com/oauth2/authorize',
-    tokenEndpoint: 'https://api.fitbit.com/oauth2/token',
-    revocationEndpoint: 'https://api.fitbit.com/oauth2/revoke'
-  }
-};
-
-// Log in to get an authentication token
-const authState = await authorize(config);
-
-// Refresh token
-const refreshedState = await refresh(config, {
-  refreshToken: authState.refreshToken,
-});
-
-// Revoke token
-await revoke(config, {
-  tokenToRevoke: refreshedState.refreshToken
-});
-```
-
-## Contributors
-
-Thanks goes to these wonderful people
-([emoji key](https://github.com/kentcdodds/all-contributors#emoji-key)):
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-
-<!-- prettier-ignore -->
-| [<img src="https://avatars0.githubusercontent.com/u/6534400?v=4" width="100px;"/><br /><sub><b>Kadi Kraman</b></sub>](https://github.com/kadikraman)<br />[💻](https://github.com/FormidableLabs/react-native-app-auth/commits?author=kadikraman "Code") [📖](https://github.com/FormidableLabs/react-native-app-auth/commits?author=kadikraman "Documentation") [🚇](#infra-kadikraman "Infrastructure (Hosting, Build-Tools, etc)") [⚠️](https://github.com/FormidableLabs/react-native-app-auth/commits?author=kadikraman "Tests") [👀](#review-kadikraman "Reviewed Pull Requests") [💡](#example-kadikraman "Examples") | [<img src="https://avatars1.githubusercontent.com/u/1203949?v=4" width="100px;"/><br /><sub><b>Jani Eväkallio</b></sub>](https://twitter.com/jevakallio)<br />[💡](#example-jevakallio "Examples") [📖](https://github.com/FormidableLabs/react-native-app-auth/commits?author=jevakallio "Documentation") [⚠️](https://github.com/FormidableLabs/react-native-app-auth/commits?author=jevakallio "Tests") [👀](#review-jevakallio "Reviewed Pull Requests") [🤔](#ideas-jevakallio "Ideas, Planning, & Feedback") | [<img src="https://avatars0.githubusercontent.com/u/2041385?v=4" width="100px;"/><br /><sub><b>Phil Plückthun</b></sub>](https://twitter.com/_philpl)<br />[📖](https://github.com/FormidableLabs/react-native-app-auth/commits?author=philpl "Documentation") [👀](#review-philpl "Reviewed Pull Requests") [🤔](#ideas-philpl "Ideas, Planning, & Feedback") | [<img src="https://avatars1.githubusercontent.com/u/4206028?v=4" width="100px;"/><br /><sub><b>Imran Sulemanji</b></sub>](https://github.com/imranolas)<br />[🤔](#ideas-imranolas "Ideas, Planning, & Feedback") [👀](#review-imranolas "Reviewed Pull Requests") | [<img src="https://avatars3.githubusercontent.com/u/2393035?v=4" width="100px;"/><br /><sub><b>JP</b></sub>](http://twitter.com/jpdriver)<br />[🤔](#ideas-jpdriver "Ideas, Planning, & Feedback") [👀](#review-jpdriver "Reviewed Pull Requests") | [<img src="https://avatars2.githubusercontent.com/u/6714912?v=4" width="100px;"/><br /><sub><b>Matt Cubitt</b></sub>](https://github.com/mattcubitt)<br />[🤔](#ideas-mattcubitt "Ideas, Planning, & Feedback") [👀](#review-mattcubitt "Reviewed Pull Requests") |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-This project follows the [all-contributors](https://github.com/kentcdodds/all-contributors)
-specification. Contributions of any kind are welcome!

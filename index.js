@@ -22,19 +22,81 @@ const validateClientId = clientId =>
 const validateRedirectUrl = redirectUrl =>
   invariant(typeof redirectUrl === 'string', 'Config error: redirectUrl must be a string');
 
+const validateHeaders = headers => {
+  if (!headers) {
+    return;
+  }
+  const customHeaderTypeErrorMessage =
+    'Config error: customHeaders type must be { token?: { [key: string]: string }, authorize?: { [key: string]: string }}';
+
+  const authorizedKeys = ['token', 'authorize'];
+  const keys = Object.keys(headers);
+  const correctKeys = keys.filter(key => authorizedKeys.includes(key));
+  invariant(
+    keys.length <= authorizedKeys.length &&
+      correctKeys.length > 0 &&
+      correctKeys.length === keys.length,
+    customHeaderTypeErrorMessage
+  );
+
+  Object.values(headers).forEach(value => {
+    invariant(typeof value === 'object', customHeaderTypeErrorMessage);
+    invariant(
+      Object.values(value).filter(key => typeof key !== 'string').length === 0,
+      customHeaderTypeErrorMessage
+    );
+  });
+};
+
+export const prefetchConfiguration = async ({
+  warmAndPrefetchChrome,
+  issuer,
+  redirectUrl,
+  clientId,
+  scopes,
+  serviceConfiguration,
+  dangerouslyAllowInsecureHttpRequests = false,
+  customHeaders,
+}) => {
+  if (Platform.OS === 'android') {
+    validateIssuerOrServiceConfigurationEndpoints(issuer, serviceConfiguration);
+    validateClientId(clientId);
+    validateRedirectUrl(redirectUrl);
+    validateHeaders(customHeaders);
+
+    const nativeMethodArguments = [
+      warmAndPrefetchChrome,
+      issuer,
+      redirectUrl,
+      clientId,
+      scopes,
+      serviceConfiguration,
+      dangerouslyAllowInsecureHttpRequests,
+      customHeaders,
+    ];
+
+    RNAppAuth.prefetchConfiguration(...nativeMethodArguments);
+  }
+};
+
 export const authorize = ({
   issuer,
   redirectUrl,
   clientId,
   clientSecret,
   scopes,
+  useNonce = true,
+  usePKCE = true,
   additionalParameters,
   serviceConfiguration,
+  clientAuthMethod = 'basic',
   dangerouslyAllowInsecureHttpRequests = false,
+  customHeaders,
 }) => {
   validateIssuerOrServiceConfigurationEndpoints(issuer, serviceConfiguration);
   validateClientId(clientId);
   validateRedirectUrl(redirectUrl);
+  validateHeaders(customHeaders);
   // TODO: validateAdditionalParameters
 
   const nativeMethodArguments = [
@@ -46,8 +108,17 @@ export const authorize = ({
     additionalParameters,
     serviceConfiguration,
   ];
+
   if (Platform.OS === 'android') {
+    nativeMethodArguments.push(usePKCE);
+    nativeMethodArguments.push(clientAuthMethod);
     nativeMethodArguments.push(dangerouslyAllowInsecureHttpRequests);
+    nativeMethodArguments.push(customHeaders);
+  }
+
+  if (Platform.OS === 'ios') {
+    nativeMethodArguments.push(useNonce);
+    nativeMethodArguments.push(usePKCE);
   }
 
   return RNAppAuth.authorize(...nativeMethodArguments);
@@ -62,13 +133,16 @@ export const refresh = (
     scopes,
     additionalParameters,
     serviceConfiguration,
+    clientAuthMethod = 'basic',
     dangerouslyAllowInsecureHttpRequests = false,
+    customHeaders,
   },
   { refreshToken }
 ) => {
   validateIssuerOrServiceConfigurationEndpoints(issuer, serviceConfiguration);
   validateClientId(clientId);
   validateRedirectUrl(redirectUrl);
+  validateHeaders(customHeaders);
   invariant(refreshToken, 'Please pass in a refresh token');
   // TODO: validateAdditionalParameters
 
@@ -84,7 +158,9 @@ export const refresh = (
   ];
 
   if (Platform.OS === 'android') {
+    nativeMethodArguments.push(clientAuthMethod);
     nativeMethodArguments.push(dangerouslyAllowInsecureHttpRequests);
+    nativeMethodArguments.push(customHeaders);
   }
 
   return RNAppAuth.refresh(...nativeMethodArguments);
