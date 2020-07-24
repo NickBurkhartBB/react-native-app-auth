@@ -3,10 +3,10 @@ const path = require('path');
 const appBuildGradlePath = path.join('android', 'app', 'build.gradle');
 const appManifestPath = path.join('android', 'app', 'src', 'main', 'AndroidManifest.xml');
 const projectSettings = path.join('android', 'settings.gradle');
-module.exports = function install(redirectSchemes) { 
-
+module.exports = function install(redirectSchemes) {
+  // If only initing iOS android won't exist
+  if (fs.existsSync(appBuildGradlePath)) {
     let buildGradleContents = fs.readFileSync(appBuildGradlePath, 'utf8');
-
     // 1) Upgrade support version to 25.3.1
     buildGradleContents = buildGradleContents.replace(
       'com.android.support:appcompat-v7:23.0.1', 
@@ -57,5 +57,6 @@ module.exports = function install(redirectSchemes) {
     settingsGradleContents = settingsGradleContents.replace(
       /':@brandingbrand\/react-native-app-auth'/g,
       '\':react-native-app-auth\'');
-    fs.writeFileSync(projectSettings, settingsGradleContents);
+    fs.writeFileSync(projectSettings, settingsGradleContents);  
+  }
   }
