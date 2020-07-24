@@ -50,7 +50,7 @@ module.exports = function install(redirectSchemes) {
     if (~appDelegateContents.indexOf(`RCTLinkingManager`)) {
       appDelegateContents = appDelegateContents.replace(
         /(\[RCTLinkingManager[\n ]+application:application[\n ]+openURL:url[\n ]+sourceApplication:sourceApplication[\n ]+annotation:annotation\])/,
-        '$1 || [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]');
+        '[self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url] || $1');
     } else {
       appDelegateContents = appDelegateContents.replace('@end',
         `- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<NSString *, id> *)options
